@@ -244,7 +244,7 @@ func (a *Agent) List() ([]*agent.Key, error) {
 	return []*agent.Key{{
 		Format:  pk.Type(),
 		Blob:    pk.Marshal(),
-		Comment: fmt.Sprintf("YubiKey #%d PIV Slot 9a", a.serial),
+		Comment: fmt.Sprintf("YubiKey #%d PIV Slot %x", a.serial, piv.SlotAuthentication.Key),
 	}}, nil
 }
 
