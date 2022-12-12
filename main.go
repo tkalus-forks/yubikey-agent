@@ -157,6 +157,9 @@ type Agent struct {
 	// more than a few seconds for the touch operation. It is paused and reset
 	// by getPIN so it won't fire while waiting for the PIN.
 	touchNotification *time.Timer
+
+	// ykTransactionTTL is armed/reset by Sign to expire the Yubikey transaction.
+	ykTransactionTTL *time.Timer
 }
 
 var _ agent.ExtendedAgent = &Agent{}
@@ -337,7 +340,22 @@ func (a *Agent) SignWithFlags(key ssh.PublicKey, data []byte, flags agent.Signat
 			alg = ssh.SigAlgoRSASHA2512
 		}
 		// TODO: maybe retry if the PIN is not correct?
-		return s.(ssh.AlgorithmSigner).SignWithAlgorithm(rand.Reader, data, alg)
+		ssh_signature, err := s.(ssh.AlgorithmSigner).SignWithAlgorithm(rand.Reader, data, alg)
+		if err != nil {
+			return nil, err
+		}
+
+		if a.ykTransactionTTL != nil {
+			a.ykTransactionTTL.Reset(5 * time.Minute)
+		} else {
+			a.ykTransactionTTL = time.NewTimer(5 * time.Minute)
+		}
+		go func() {
+			<-a.ykTransactionTTL.C
+			a.Close()
+		}()
+
+		return ssh_signature, nil
 	}
 	return nil, fmt.Errorf("no private keys match the requested public key")
 }
