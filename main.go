@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"syscall"
@@ -33,6 +34,26 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 	"golang.org/x/crypto/ssh/terminal"
 )
+
+var version string
+var commit string
+var date string
+var builtBy string
+
+func init() {
+	// if version is not set at link time (by goreleaser), set to
+	// debug.BuildInfo.Main.Version, which is "(devel)" when building from
+	// within the module. See golang.org/issue/29814 and
+	// golang.org/issue/29228.
+	if version != "" {
+		return
+	}
+	if buildInfo, ok := debug.ReadBuildInfo(); ok {
+		version = buildInfo.Main.Version
+		return
+	}
+	version = "(unknown version)"
+}
 
 func main() {
 	flag.Usage = func() {
@@ -75,6 +96,16 @@ func main() {
 }
 
 func runAgent(socketPath string) {
+	log.Println("Starting tkalus-forks/yubikey-agent version:", version)
+	if (commit != "") {
+		log.Println(" commit:", commit)
+	}
+	if (date != "") {
+		log.Println(" date:", date)
+	}
+	if (builtBy != "") {
+		log.Println(" builtBy:", builtBy)
+	}
 	if terminal.IsTerminal(int(os.Stdin.Fd())) {
 		log.Println("Warning: yubikey-agent is meant to run as a background daemon.")
 		log.Println("Running multiple instances is likely to lead to conflicts.")

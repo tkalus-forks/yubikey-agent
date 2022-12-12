@@ -1,0 +1,13 @@
+project_name: yubikey-agent
+builds:
+  - env: [CGO_ENABLED=1]
+    goos:
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+archives:
+  - replacements:
+      amd64: x86_64

@@ -18,29 +18,12 @@ import (
 	"log"
 	"math/big"
 	"os"
-	"runtime/debug"
 	"time"
 
 	"github.com/go-piv/piv-go/piv"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/term"
 )
-
-// Version can be set at link time to override debug.BuildInfo.Main.Version,
-// which is "(devel)" when building from within the module. See
-// golang.org/issue/29814 and golang.org/issue/29228.
-var Version string
-
-func init() {
-	if Version != "" {
-		return
-	}
-	if buildInfo, ok := debug.ReadBuildInfo(); ok {
-		Version = buildInfo.Main.Version
-		return
-	}
-	Version = "(unknown version)"
-}
 
 func connectForSetup() *piv.YubiKey {
 	cards, err := piv.Cards()
@@ -151,8 +134,8 @@ func runSetup(yk *piv.YubiKey) {
 	}
 	parent := &x509.Certificate{
 		Subject: pkix.Name{
-			Organization:       []string{"yubikey-agent"},
-			OrganizationalUnit: []string{Version},
+			Organization:       []string{"tkalus-forks/yubikey-agent"},
+			OrganizationalUnit: []string{version},
 		},
 		PublicKey: priv.Public(),
 	}
